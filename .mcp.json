@@ -5,9 +5,9 @@
       "command": "uv",
       "args": [
         "run",
-        "mcp_server/alas_mcp_server.py",
-        "--config",
-        "alas"
+        "mcp_server/server.py",
+        "--serial",
+        "127.0.0.1:21503"
       ],
       "env": {
         "PYTHONIOENCODING": "utf-8"

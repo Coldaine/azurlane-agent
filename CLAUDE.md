@@ -20,11 +20,16 @@ If a proposed change conflicts with NORTH_STAR.md, the change is wrong.
 ```
 azurlane-agent/
 ├── CLAUDE.md              # you are here
-├── mcp_server/            # MCP tool definitions (FastMCP)
-│   ├── adb_tools.py       # screenshot, tap, swipe (pure ADB)
-│   ├── screen_tools.py    # OCR, template matching, state detection
-│   └── workflow_tools.py  # login, commission, daily, combat
-├── tools/                 # standalone tool implementations
+├── pyproject.toml         # Python 3.10+, dependencies, pytest config
+├── CHANGELOG.md           # project changelog
+├── .mcp.json              # MCP client config (points to server.py)
+├── .gitignore
+├── mcp_server/            # MCP server and tools (FastMCP)
+│   ├── __init__.py
+│   ├── server.py          # ADB tools: adb_screenshot, adb_tap, adb_swipe
+│   └── log_parser.py      # ALAS log analysis CLI (standalone, zero-dep)
+├── tools/                 # standalone tool implementations (placeholder)
+│   └── __init__.py
 ├── docs/
 │   ├── NORTH_STAR.md      # sacrosanct vision
 │   ├── ROADMAP.md         # phased plan
@@ -32,15 +37,17 @@ azurlane-agent/
 │   ├── plans/             # implementation specs, migration plan
 │   └── reference/         # ALAS workflow analysis (read-only reference)
 ├── assets/                # game templates, reference images
-├── tests/
-└── pyproject.toml         # Python 3.10+
+│   └── .gitkeep
+└── tests/
+    ├── __init__.py
+    └── test_adb_tools.py  # unit tests for server.py ADB tools (mocked)
 ```
 
 ## The Rules
 
 1. **No ALAS imports.** No `from module.*`. No `import module`. Tools are standalone.
 2. **Python 3.10+.** Clean dependency tree. No legacy constraints.
-3. **Tool contract.** All tools return this envelope:
+3. **Tool contract.** Higher-level tools (screen, workflow) must return this envelope:
    ```python
    {
        "success": bool,
@@ -50,6 +57,8 @@ azurlane-agent/
        "expected_state": str
    }
    ```
+   Note: Low-level ADB tools (`adb_screenshot`, `adb_tap`, `adb_swipe`) return raw values
+   (Image or string) since they are primitives, not stateful operations.
 4. **Deterministic first.** OCR, template matching, pixel checks for normal operations. LLM vision is recovery-only.
 5. **ADB is the only interface.** Screenshot, tap, swipe over TCP. No ALAS process, no shared memory, no IPC.
 
@@ -69,20 +78,30 @@ Next: behavioral catalog entries, then standalone screen tools (OCR, template ma
 
 ### Launch
 ```bash
-uv run mcp_server/server.py
+uv run mcp_server/server.py --serial 127.0.0.1:21503
 ```
+
+The `--serial` flag defaults to `127.0.0.1:21503` if omitted. The server runs on stdio transport (for MCP client integration).
 
 ### Environment
 - Emulator running with ADB on `127.0.0.1:21503` (MEmu) or LDPlayer equivalent
-- `lz4` package installed (screenshot decompression)
+- ADB server running (`adb start-server`)
+- Dependencies: `fastmcp`, `adbutils`, `Pillow` (see pyproject.toml)
 
-### Tool Categories
+### Tools (implemented)
 
-| Category | Purpose | Tools |
-|----------|---------|-------|
-| ADB | Device interaction | `adb.screenshot`, `adb.tap`, `adb.swipe` |
-| Screen | Deterministic vision | `screen.ocr`, `screen.match_template`, `screen.detect_page` |
-| Workflow | Game automation | `workflow.login`, `workflow.commission`, etc. |
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| `adb_screenshot` | Capture device screen as PNG | Returns FastMCP `Image` |
+| `adb_tap` | Tap a coordinate | `adb shell input tap` via adbutils |
+| `adb_swipe` | Swipe between two coordinates | Duration in ms, converted to seconds |
+
+### Tools (planned, not yet implemented)
+
+| Category | Purpose | Examples |
+|----------|---------|----------|
+| Screen | Deterministic vision | OCR, template matching, state detection |
+| Workflow | Game automation | login, commission, daily, combat |
 
 ## Development Workflow
 
