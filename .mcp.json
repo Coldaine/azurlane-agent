@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "azurlane": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "mcp_server/alas_mcp_server.py",
+        "--config",
+        "alas"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}

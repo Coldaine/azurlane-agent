@@ -1,0 +1,26 @@
+[project]
+name = "azurlane-agent"
+version = "0.1.0"
+description = "LLM-augmented Azur Lane automation — MCP server and standalone tools"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=2.0",
+    "adbutils>=2.0",
+    "opencv-python>=4.8",
+    "Pillow>=10.0",
+    "lz4>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
